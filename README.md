@@ -1,5 +1,7 @@
 # ANoCo (Unofficial Reproduction)
 
+**English** | [简体中文](README.zh-CN.md)
+
 **Training-free, closed-form anomaly detection** — an independent reimplementation of the CVPR 2026
 paper [*Anomaly as Non-Conformity via Training-Free Graph Laplacian Energy Minimization*](https://openaccess.thecvf.com/content/CVPR2026/html/Seo_Anomaly_as_Non-Conformity_via_Training-Free_Graph_Laplacian_Energy_Minimization_CVPR_2026_paper.html)
 (Seo et al.), plus a set of engineering optimizations for many-shot industrial inspection.
