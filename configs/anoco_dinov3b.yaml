@@ -1,0 +1,40 @@
+# ANoCo — DINOv3-B/16 (speed / accuracy trade-off, ~3x faster backbone than L/16).
+# Load with: ANoCoConfig.from_yaml("configs/anoco_dinov3b.yaml")
+#
+# Convert HF safetensors to the fb-format .pt with:
+#   python scripts/convert_dinov3_safetensors.py --src model.safetensors \
+#          --backbone dinov3_vitb16 --out weights/dinov3_vitb16.pt
+
+# ---- Backbone / feature extraction ----
+backbone: dinov3_vitb16
+dinov3_repo_dir: ""              # or set the DINOV3_REPO environment variable
+dinov3_weights: ""               # local checkpoint path
+# DINOv3-B/16 has 12 blocks. Keep the paper's ~0.75 depth ratio: round(0.75*12)=9 -> block 8.
+layer_index: 8
+n_storage_tokens: 4
+apply_norm: true
+img_size: 768                    # 768/16 = 48 -> 48x48 = 2304 patches
+patch_size: 16
+mean: [0.485, 0.456, 0.406]
+std: [0.229, 0.224, 0.225]
+
+# ---- Anchor-driven retrieval (Section 3.2) ----
+prefix_rule: stop_first_violation
+retrieve_topk: 200
+
+# ---- Graph / solver (Sections 3.3-3.5) ----
+lam: 1.0
+clamp_negative_weights: false
+eps: 1.0e-8
+
+# ---- Non-conformity scoring (Section 3.6, Eq. 10) ----
+score_metric: product
+image_reduction: max
+
+# ---- Post-processing (Supplementary S1) ----
+gaussian_kernel: 7
+gaussian_sigma: 0.8
+
+# ---- Runtime ----
+device: cuda
+dtype: float32

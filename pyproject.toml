@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anoco"
+version = "0.1.0"
+description = "Unofficial reproduction of ANoCo (training-free anomaly detection via graph Laplacian energy minimization), with engineering optimizations for many-shot industrial inspection."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Judy-Jim" }]
+keywords = ["anomaly-detection", "training-free", "dinov3", "industrial-inspection"]
+dependencies = [
+    "torch>=2.0",
+    "torchvision",
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    "pillow",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+demo = ["opencv-python", "safetensors"]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = ["anoco", "anoco.features"]

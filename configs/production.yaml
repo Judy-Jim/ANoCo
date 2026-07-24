@@ -1,0 +1,63 @@
+# ============================================================
+# ANoCo — production template for many-shot industrial inspection.
+# ============================================================
+# Demonstrates the full engineering pipeline: multi-layer fusion, cluster-stratified
+# memory bank, greedy coreset, excess normalization, top-k aggregation, chunked matching.
+# Tune img_hw / bank_size / coreset / excess_k / fpr_target to your own dataset.
+#
+# Core fields load with: ANoCoConfig.from_yaml("configs/production.yaml")
+# The `production:` block below is read by scripts / BankBuilder / ANoCoInspector.
+# ============================================================
+
+# ---- Backbone / feature extraction ----
+backbone: dinov3_vitl16
+dinov3_repo_dir: ""              # or set the DINOV3_REPO environment variable
+dinov3_weights: ""               # local checkpoint; see scripts/convert_dinov3_safetensors.py
+layer_index: 17                  # single-layer fallback (overridden by layer_indices)
+layer_indices: [11, 17]          # multi-layer fusion: L11 (texture) + L17 (semantic)
+layer_fusion: concat             # L2-normalize each layer, then concat -> 2048d
+apply_norm: true
+img_hw: [1024, 1024]             # H x W; set to your aspect ratio (each a multiple of patch_size)
+patch_size: 16
+mean: [0.485, 0.456, 0.406]
+std: [0.229, 0.224, 0.225]
+
+# ---- ANoCo scorer ----
+prefix_rule: stop_first_violation
+retrieve_topk: 200               # topk(K) instead of full argsort (0 = full argsort)
+lam: 1.0
+clamp_negative_weights: false
+eps: 1.0e-8
+score_metric: product            # patch energy = ||drift||^2 * (1 - cos)  (Eq. 10)
+image_reduction: max             # overridden by production.agg_method below
+gaussian_kernel: 7
+gaussian_sigma: 0.8
+
+# ---- Runtime ----
+device: cuda
+dtype: float32
+
+# ============================================================
+# Production pipeline params (not ANoCoConfig fields; read by BankBuilder / Inspector)
+# ============================================================
+production:
+  # Memory bank
+  n_clusters: 20                 # K-Means clusters for stratified bank sampling
+  bank_size: 200                 # number of OK images sampled into the bank
+  coreset: 80000                 # greedy coreset size (patches)
+  coreset_method: greedy
+  ref_aug: none                  # none | flips | rot90 | light
+  seed: 42
+
+  # Post-processing
+  excess_k: 3.0                  # excess normalization: max(0, E - mu - k*sigma)
+  agg_method: topk_mean          # image-level aggregation
+  agg_k: 5                       # top-K mean
+
+  # Inference
+  decode: draft                  # JPEG reduced-scale decode (faster) | pil
+  fp16: true                     # fp16 autocast for the backbone forward
+  chunk: 1024                    # chunked matching (caps VRAM)
+
+  # Threshold
+  fpr_target: 2.0                # target false-positive (overkill) rate (%)
